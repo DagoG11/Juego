@@ -1,84 +1,84 @@
 import pygame
+from src.core.utils import load_image
+
 
 class MainMenu:
     """
-    Menú principal del juego.
-    
-    Pantalla de inicio que muestra el título, controles
-    y permite iniciar el juego.
+    Menú principal del juego basado en start.png con botón PLAY encima.
     """
+
     def __init__(self, game):
         self.game = game
         self.settings = game.settings
         
-        # Fuentes para diferentes elementos
-        self.title_font = pygame.font.Font(None, 84)
-        self.menu_font = pygame.font.Font(None, 42)
-        self.small_font = pygame.font.Font(None, 28)
+        # Cargar imagen start.png que ya tiene el título
+        try:
+            self.start_image = load_image(
+                "assets/images/background/start",
+                (self.settings.screen_width, self.settings.screen_height),
+                smoothing=self.settings.sprite_smoothing
+            )
+        except Exception as e:
+            self.start_image = None
+            print(f"⚠️ No se pudo cargar la imagen start.png: {e}")
         
+        # Fuentes para botón e instrucciones
+        self.font_button = pygame.font.Font(None, 48)
+        self.font_instructions = pygame.font.Font(None, 28)
+        
+        # Botón PLAY - posición fija en pantalla
+        self.play_button_rect = pygame.Rect(
+            self.settings.screen_width // 2 - 100,
+            self.settings.screen_height - 150,
+            200,
+            60
+        )
+        
+        self.blink_timer = 0  # Para parpadeo instrucciones
+
     def handle_events(self, event):
-        """
-        Maneja los eventos de entrada del menú.
-        
-        Args:
-            event: Evento de pygame a procesar
-        """
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                self.game.start_game()
-    
+            return 'start_game'
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.play_button_rect.collidepoint(event.pos):
+                return 'start_game'
+        return None
+
     def update(self):
-        """Actualiza el estado del menú (sin lógica activa)"""
-        pass
-    
+        self.blink_timer += 1
+        if self.blink_timer > 120:
+            self.blink_timer = 0
+
     def draw(self, screen):
-        """
-        Dibuja el menú en pantalla.
+        if self.start_image:
+            screen.blit(self.start_image, (0, 0))
+        else:
+            screen.fill((0, 0, 0))
+
+        # Dibujar botón PLAY encima de la imagen
+        mouse_pos = pygame.mouse.get_pos()
+        is_hover = self.play_button_rect.collidepoint(mouse_pos)
         
-        Args:
-            screen: Superficie de pygame donde dibujar
-        """
-        screen.fill(self.settings.bg_color)
+        button_color = (255, 200, 50) if is_hover else (200, 100, 30)
+        pygame.draw.rect(screen, button_color, self.play_button_rect, border_radius=10)
+        pygame.draw.rect(screen, (255, 255, 255), self.play_button_rect, 3, border_radius=10)
         
-        # Título principal con efecto de sombra
-        title_text = self.title_font.render("DOGRUNNER", True, self.settings.yellow)
-        title_shadow = self.title_font.render("DOGRUNNER", True, self.settings.black)
-        title_rect = title_text.get_rect(center=(self.settings.screen_width // 2, 120))
-        shadow_rect = title_shadow.get_rect(center=(self.settings.screen_width // 2 + 3, 123))
-        screen.blit(title_shadow, shadow_rect)
-        screen.blit(title_text, title_rect)
-        
-        # Subtítulo descriptivo
-        subtitle_text = self.small_font.render("¡Escapa del perro feroz!", True, self.settings.red)
-        subtitle_rect = subtitle_text.get_rect(center=(self.settings.screen_width // 2, 200))
-        screen.blit(subtitle_text, subtitle_rect)
-        
-        # Instrucción para iniciar
-        start_text = self.menu_font.render("Presiona ESPACIO para comenzar", True, self.settings.white)
-        start_shadow = self.menu_font.render("Presiona ESPACIO para comenzar", True, self.settings.black)
-        start_rect = start_text.get_rect(center=(self.settings.screen_width // 2, 320))
-        shadow_start_rect = start_shadow.get_rect(center=(self.settings.screen_width // 2 + 2, 322))
-        screen.blit(start_shadow, shadow_start_rect)
-        screen.blit(start_text, start_rect)
-        
-        # Título de controles
-        controls_title = self.menu_font.render("CONTROLES:", True, self.settings.orange)
-        controls_title_rect = controls_title.get_rect(center=(self.settings.screen_width // 2, 400))
-        screen.blit(controls_title, controls_title_rect)
-        
-        # Lista de controles
-        controls = [
-            "ESPACIO o ↑ = Saltar",
-            "← = Moverse a la izquierda",
-            "→ = Moverse a la derecha",
-            "",
-            "¡Corre sin parar y evita los obstáculos!"
-        ]
-        
-        y_offset = 450
-        for control in controls:
-            if control:
-                control_text = self.small_font.render(control, True, self.settings.black)
-                control_rect = control_text.get_rect(center=(self.settings.screen_width // 2, y_offset))
-                screen.blit(control_text, control_rect)
-            y_offset += 35
+        play_text = self.font_button.render("PLAY", True, (0, 0, 0))
+        play_x = self.play_button_rect.centerx - play_text.get_width() // 2
+        play_y = self.play_button_rect.centery - play_text.get_height() // 2
+        screen.blit(play_text, (play_x, play_y))
+
+        # Instrucciones que parpadean debajo del botón
+        if self.blink_timer < 60:
+            instructions = [
+                "Presiona ESPACIO o haz clic en PLAY para comenzar",
+                "",
+                "Controles:",
+                "ESPACIO / ↑ = Saltar",
+                "← / → = Moverse",
+            ]
+            y_offset = self.settings.screen_height - 80
+            for i, line in enumerate(instructions):
+                inst_text = self.font_instructions.render(line, True, (255, 255, 255))
+                inst_x = self.settings.screen_width // 2 - inst_text.get_width() // 2
+                screen.blit(inst_text, (inst_x, y_offset + i * 30))

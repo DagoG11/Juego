@@ -33,7 +33,7 @@ class Obstacle(pygame.sprite.Sprite):
         )
         
         # Posicionar más cerca del suelo (VALOR FIJO: 40)
-        self.y = settings.ground_level - self.height + 40
+        self.y = settings.ground_level - self.height + 25
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = self.y

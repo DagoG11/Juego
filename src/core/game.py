@@ -3,6 +3,7 @@ import sys
 from src.scenes.level1 import Level1
 from src.scenes.main_menu import MainMenu
 
+
 class Game:
     """
     Clase principal del juego.
@@ -45,8 +46,11 @@ class Game:
                     running = False
                     
                 if self.state == "menu":
-                    self.main_menu.handle_events(event)
-                elif self.state == "playing":
+                    result = self.main_menu.handle_events(event)
+                    # Cambiar a modo juego cuando el menú lo indica
+                    if result == 'start_game':
+                        self.start_game()
+                elif self.state == "playing" and self.level is not None:
                     self.level.handle_events(event)
                 elif self.state == "game_over":
                     self.handle_game_over_events(event)
@@ -54,7 +58,7 @@ class Game:
             # Actualizar lógica
             if self.state == "menu":
                 self.main_menu.update()
-            elif self.state == "playing":
+            elif self.state == "playing" and self.level is not None:
                 self.level.update()
                 if self.level.game_over:
                     self.state = "game_over"
@@ -64,7 +68,7 @@ class Game:
             # Renderizar pantalla
             if self.state == "menu":
                 self.main_menu.draw(self.screen)
-            elif self.state == "playing":
+            elif self.state == "playing" and self.level is not None:
                 self.level.draw(self.screen)
             elif self.state == "game_over":
                 self.draw_game_over()
@@ -73,9 +77,9 @@ class Game:
     
     def start_game(self):
         """Inicia una nueva partida del nivel 1"""
+        self.level = Level1(self)
         self.state = "playing"
         self.score = 0
-        self.level = Level1(self)
         print("\n" + "="*60)
         print("🎮 JUEGO INICIADO")
         print("="*60 + "\n")
